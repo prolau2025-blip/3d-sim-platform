@@ -20,7 +20,8 @@ class GSEngine:
         status = self.generation_queue.get(job_id, "NOT_FOUND")
         response = {"status": status}
         if status == "READY":
-            response["ply_url"] = "https://huggingface.co/datasets/dylanebert/3dgs/resolve/main/bonsai/bonsai-7k.splat"
+            # Using locally hosted fast splat file
+            response["ply_url"] = "/bonsai.splat"
         return response
 
 gs_engine_client = GSEngine()
