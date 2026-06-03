@@ -1,10 +1,15 @@
 from fastapi import FastAPI, UploadFile, Form, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from api.gemini_service import gemini_client
-from api.gs_engine import gs_engine_client
 import uvicorn
 from typing import Optional
+
+try:
+    from api.gemini_service import gemini_client
+    from api.gs_engine import gs_engine_client
+except ImportError:
+    from gemini_service import gemini_client
+    from gs_engine import gs_engine_client
 
 app = FastAPI(title="3DGS Simulation API")
 

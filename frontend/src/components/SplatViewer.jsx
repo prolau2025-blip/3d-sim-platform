@@ -1,51 +1,50 @@
 import React, { useRef, useEffect } from 'react'
+import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d'
 
 export default function SplatViewer({ splatUrl }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
+    if (!containerRef.current) return
+    
     let viewer = null
-    let mounted = true
-
-    import('@mkkellogg/gaussian-splats-3d').then((GaussianSplats3D) => {
-      if (!containerRef.current || !mounted) return
-      
+    try {
       viewer = new GaussianSplats3D.Viewer({
         selfDrivenMode: true,
         useWebXR: false,
         rootElement: containerRef.current,
         cameraUp: [0, -1, 0],
         initialCameraPosition: [0, 2, 5],
-        initialCameraLookAt: [0, 0, 0]
+        initialCameraLookAt: [0, 0, 0],
+        sharedMemoryForWorkers: false // CRITICAL FIX: Disables SharedArrayBuffer which breaks on Vercel without strict CORS headers
       })
 
       viewer.addSplatScene(splatUrl, {
         splatAlphaCrop: 0.1,
       })
       .then(() => {
-        if (mounted) {
-          viewer.start()
-        }
+        viewer.start()
       })
       .catch((err) => {
           console.error("Failed to load splat scene:", err);
       });
-    }).catch(err => {
-        console.error("Failed to import gaussian-splats-3d", err);
-    })
+    } catch(err) {
+      console.error("Viewer initialization failed:", err)
+    }
 
     return () => {
-      mounted = false
       if (viewer) {
-          // Attempt to dispose if viewer has a dispose method
           try {
-              if (viewer.dispose) viewer.dispose();
+              viewer.dispose();
           } catch(e) {}
+      }
+      if (containerRef.current) {
+          containerRef.current.innerHTML = '';
       }
     }
   }, [splatUrl])
 
   return (
-    <div ref={containerRef} className="w-full h-full relative" />
+    <div ref={containerRef} className="w-full h-full relative" style={{ minHeight: '500px' }} />
   )
 }

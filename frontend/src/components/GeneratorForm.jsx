@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { ImagePlus, Sparkles } from 'lucide-react'
 
@@ -6,6 +6,14 @@ export default function GeneratorForm({ setJobId, setStatus, setSplatUrl }) {
   const [prompt, setPrompt] = useState('')
   const [file, setFile] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -22,7 +30,6 @@ export default function GeneratorForm({ setJobId, setStatus, setSplatUrl }) {
     }
 
     try {
-      // Calls relative API endpoint (proxied in dev, native in Vercel prod)
       const response = await axios.post('/api/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
@@ -37,22 +44,28 @@ export default function GeneratorForm({ setJobId, setStatus, setSplatUrl }) {
   }
 
   const pollStatus = async (id) => {
-    const interval = setInterval(async () => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    
+    intervalRef.current = setInterval(async () => {
       try {
         const res = await axios.get(`/api/status/${id}`)
         const state = res.data.status
         setStatus(state)
         
         if (state === 'READY') {
-          clearInterval(interval)
+          clearInterval(intervalRef.current)
           setSplatUrl(res.data.ply_url)
           setIsSubmitting(false)
-        } else if (state === 'FAILED') {
-          clearInterval(interval)
+        } else if (state === 'FAILED' || state === 'NOT_FOUND') {
+          clearInterval(intervalRef.current)
           setIsSubmitting(false)
+          setStatus('FAILED')
         }
       } catch (err) {
         console.error(err)
+        clearInterval(intervalRef.current)
+        setIsSubmitting(false)
+        setStatus('FAILED')
       }
     }, 2000)
   }
