@@ -22,8 +22,8 @@ export default function GeneratorForm({ setJobId, setStatus, setSplatUrl }) {
     }
 
     try {
-      // Backend API port
-      const response = await axios.post('http://localhost:8000/api/generate', formData, {
+      // Calls relative API endpoint (proxied in dev, native in Vercel prod)
+      const response = await axios.post('/api/generate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       const newJobId = response.data.job_id
@@ -39,7 +39,7 @@ export default function GeneratorForm({ setJobId, setStatus, setSplatUrl }) {
   const pollStatus = async (id) => {
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/status/${id}`)
+        const res = await axios.get(`/api/status/${id}`)
         const state = res.data.status
         setStatus(state)
         
