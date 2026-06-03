@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import GeneratorForm from './components/GeneratorForm'
 import SplatViewer from './components/SplatViewer'
 import { Layers } from 'lucide-react'
@@ -7,6 +7,18 @@ function App() {
   const [jobId, setJobId] = useState(null)
   const [status, setStatus] = useState('IDLE') // IDLE, PENDING, GENERATING, READY, FAILED
   const [splatUrl, setSplatUrl] = useState(null)
+  const [eta, setEta] = useState(120) // Default 2 minutes ETA
+
+  useEffect(() => {
+    let timer;
+    if (status === 'GENERATING') {
+      setEta(120);
+      timer = setInterval(() => {
+        setEta((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [status]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 relative overflow-hidden flex flex-col">
@@ -52,9 +64,25 @@ function App() {
           {(status === 'PENDING' || status === 'GENERATING') && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20">
               <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"></div>
-              <p className="text-xl font-medium animate-pulse">
-                {status === 'PENDING' ? 'Analyzing with Gemini...' : 'Generating 3DGS...'}
+              <p className="text-xl font-medium animate-pulse mb-2">
+                {status === 'PENDING' ? 'Analyzing with Gemini...' : 'GPU Rasterizing Gaussians...'}
               </p>
+              {status === 'GENERATING' && (
+                <div className="text-slate-400 font-mono text-sm bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
+                  ETA: ~{Math.floor(eta / 60)}:{(eta % 60).toString().padStart(2, '0')} 
+                  {eta === 0 && ' (Finalizing payload...)'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {status === 'FAILED' && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20">
+              <div className="w-16 h-16 text-red-500 mb-6 flex items-center justify-center border-4 border-red-500/30 rounded-full">
+                 <span className="text-2xl">!</span>
+              </div>
+              <p className="text-xl font-medium text-red-400 mb-2">Generation Failed</p>
+              <p className="text-slate-400 text-sm">Please ensure you uploaded a valid image and the API is reachable.</p>
             </div>
           )}
 

@@ -50,7 +50,7 @@ async def generate_3d_world(
             image_bytes = await image.read()
             
         layout_data = await gemini_client.analyze_spatial_layout(text_prompt=prompt, image_bytes=image_bytes)
-        job_id = await gs_engine_client.start_generation(layout_data)
+        job_id = await gs_engine_client.start_generation(layout_data, image_bytes=image_bytes)
         
         return GenerationResponse(job_id=job_id, status="PENDING")
     except Exception as e:

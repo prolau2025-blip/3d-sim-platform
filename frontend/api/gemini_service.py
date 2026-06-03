@@ -10,7 +10,7 @@ if api_key != "MOCK_KEY":
 
 class GeminiService:
     def __init__(self):
-        self.model_name = 'gemini-1.5-pro-latest'
+        self.model_name = 'gemini-1.5-flash'
         self.knowledge_base = ""
         try:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
