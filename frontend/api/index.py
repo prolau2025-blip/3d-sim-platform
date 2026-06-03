@@ -17,6 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 from typing import Optional
+import httpx
+import urllib.parse
 
 try:
     from api.gemini_service import gemini_client
@@ -48,9 +50,17 @@ async def generate_3d_world(
         image_bytes = None
         if image:
             image_bytes = await image.read()
+        else:
+            # Fallback to a free Text-to-Image API if no image is uploaded
+            encoded_prompt = urllib.parse.quote(prompt)
+            image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true"
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(image_url, timeout=30.0)
+                if resp.status_code == 200:
+                    image_bytes = resp.content
             
         layout_data = await gemini_client.analyze_spatial_layout(text_prompt=prompt, image_bytes=image_bytes)
-        job_id = await gs_engine_client.start_generation(layout_data, image_bytes=image_bytes)
+        job_id = await gs_engine_client.start_generation(layout_data, prompt=prompt, image_bytes=image_bytes)
         
         return GenerationResponse(job_id=job_id, status="PENDING")
     except Exception as e:

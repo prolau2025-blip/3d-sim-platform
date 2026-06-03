@@ -13,8 +13,8 @@ export default function SplatViewer({ splatUrl }) {
         selfDrivenMode: true,
         useWebXR: false,
         rootElement: containerRef.current,
-        cameraUp: [0, -1, 0],
-        initialCameraPosition: [0, 2, 5],
+        cameraUp: [0, 1, 0],
+        initialCameraPosition: [0, 1, 5],
         initialCameraLookAt: [0, 0, 0],
         sharedMemoryForWorkers: false // CRITICAL FIX: Disables SharedArrayBuffer which breaks on Vercel without strict CORS headers
       })
